@@ -143,6 +143,7 @@ function createCopilotArguments(manifest, model, resultPath, prefixArguments) {
     'json',
     '--stream',
     'off',
+    '--allow-all-tools',
     '--add-dir',
     dirname(resultPath),
     '--allow-tool=skill',
