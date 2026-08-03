@@ -40,6 +40,18 @@ Always answer these, explicitly:
 - What proof exists: tests, live repro, CI checks, docs, dependency docs/source, shipped/current behavior.
 - What remains risky or unverified.
 - Focus on behavior, regressions, accessibility, and public API safety
+- For changed component behavior, expected verification includes the smallest applicable combination of:
+
+```bash
+yarn
+yarn format
+yarn lerna run generate
+yarn workspace @telekom/scale-components build
+yarn workspace @telekom/scale-components test --spec --max-workers=8
+yarn workspace @telekom/scale-components test --e2e --max-workers=8
+yarn workspace @telekom/scale-visual-tests test:ci -u
+```
+- dependency updates need to update the yarn.lock file and the package.json both need to be pushed (sub dependencies are only fixed in the lock file)
 
 ## Code Reading Depth
 

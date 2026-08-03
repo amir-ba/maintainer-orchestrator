@@ -79,18 +79,6 @@ Assess impacted surfaces:
 - `packages/components-angular` and `packages/components-vue`: deprecated; do not recommend code changes. Their CI builds must remain functional.
 
 Reject or escalate proposals that introduce breaking public APIs, default-style regressions, undocumented token values, or new feature work in deprecated wrappers.
-
-For changed component behavior, expected verification includes the smallest applicable combination of:
-
-```bash
-yarn format
-yarn workspace @telekom/scale-components build
-yarn workspace @telekom/scale-components test --spec --max-workers=8
-yarn workspace @telekom/scale-components test --e2e --max-workers=8
-yarn workspace @telekom/scale-visual-tests test:ci -u
-```
-- dependency updates need to update the yarn.lock file and the package.json both need to be pushed (sub dependencies are only fixed in the lock file)
-- use yarn
 Use visual baseline updates only when the rendered change is intentional and reviewed.
 
 ## Classification
