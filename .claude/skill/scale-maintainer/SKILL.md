@@ -97,6 +97,7 @@ Do not treat ordinary draft, stale, or difficult items as ignored. Only an expli
 
 Every code change to `packages/components` must pass:
 
+0. **Icon generation** — Run `yarn lerna run generate` before building to regenerate icons. This step is required before any build.
 1. **Build** — `yarn workspace @telekom/scale-components build` succeeds.
 2. **Stories** — Storybook story exists or is updated for changed component API.
 3. **Visual tests** — Visual regression baselines updated or confirmed unchanged.
@@ -116,7 +117,7 @@ Every delegated implementation agent thread must:
 - reproduce or establish root cause before accepting an existing patch;
 - rewrite when a cleaner bounded design is available;
 - add regression coverage (unit tests and/or visual baselines) when appropriate;
-- build the component package and run affected stories/visual tests before landing;
+- run `yarn lerna run generate` to regenerate icons, then build the component package and run affected stories/visual tests before landing;
 - commit with a conventional commit message and verify `commitlint` passes;
 - commit and push the final candidate, then open or update its PR;
 - rerun required checks and repair failures until exact-head CI is green;
