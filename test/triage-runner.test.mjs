@@ -169,3 +169,77 @@ test('normalizes embedded newlines in locks and verification commands', () => {
     'yarn format',
   ]);
 });
+
+test('falls back when the preferred model returns malformed JSON', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'scale-triage-malformed-'));
+  const itemPath = join(directory, 'item.json');
+  const invocationLogPath = join(directory, 'invocations.jsonl');
+  const fakeCopilotPath = join(directory, 'fake-copilot-malformed.mjs');
+
+  writeFileSync(
+    itemPath,
+    JSON.stringify({
+      id: 'item-2539',
+      content: {
+        type: 'PullRequest',
+        number: 2539,
+        title: 'Update lint configuration',
+        url: 'https://github.com/telekom/scale/pull/2539',
+      },
+    }),
+  );
+  writeFileSync(
+    fakeCopilotPath,
+    `import { appendFileSync } from 'node:fs';
+const arguments_ = process.argv.slice(2);
+appendFileSync(process.env.INVOCATION_LOG_PATH, JSON.stringify(arguments_) + '\\n');
+if (arguments_.includes('gpt-5.6-sol')) {
+  process.stdout.write('{"eligible":true,"locks":["component:lint"],"verification":["yarn lint" "yarn test"],"rationale":"Malformed"}');
+} else {
+  process.stdout.write(JSON.stringify({
+    eligible: true,
+    locks: ['component:lint'],
+    verification: ['yarn lint'],
+    rationale: 'Fallback returned valid JSON.'
+  }));
+}
+`,
+  );
+
+  const output = execFileSync(
+    process.execPath,
+    [
+      runnerPath,
+      '--item',
+      itemPath,
+      '--repository',
+      directory,
+      '--project-owner',
+      'amir-ba',
+      '--project-number',
+      '1',
+      '--copilot-command',
+      process.execPath,
+      '--copilot-arg',
+      fakeCopilotPath,
+      '--model',
+      'gpt-5.6-sol',
+      '--fallback-model',
+      'auto',
+      '--json',
+    ],
+    {
+      encoding: 'utf8',
+      env: { ...process.env, INVOCATION_LOG_PATH: invocationLogPath },
+    },
+  );
+  const invocations = readFileSync(invocationLogPath, 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line));
+
+  assert.equal(JSON.parse(output).eligible, true);
+  assert.equal(invocations.length, 2);
+  assert.ok(invocations[0].includes('gpt-5.6-sol'));
+  assert.ok(invocations[1].includes('auto'));
+});

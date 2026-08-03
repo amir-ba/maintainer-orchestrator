@@ -12,6 +12,18 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 
+function formatJsonParseError(error, output) {
+  const position = Number.parseInt(/position (\d+)/.exec(error.message)?.[1], 10);
+  const start = Number.isNaN(position) ? 0 : Math.max(0, position - 80);
+  const end = Number.isNaN(position) ? 160 : position + 80;
+  const excerpt = output
+    .slice(start, end)
+    .replace(/[\x00-\x1F]/g, (character) =>
+      `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`,
+    );
+  return `${error.message}; output near parse failure: ${excerpt}`;
+}
+
 function parseJsonResponse(output) {
   const start = output.indexOf('{');
   const end = output.lastIndexOf('}');
@@ -21,15 +33,21 @@ function parseJsonResponse(output) {
   const raw = output.slice(start, end + 1);
   try {
     return JSON.parse(raw);
-  } catch {
+  } catch (error) {
     // Escape bare control characters inside JSON string literals that the CLI emits unescaped
     const sanitized = raw.replace(/"(?:[^"\\]|\\.)*"/gs, (match) =>
       match.replace(/[\x00-\x1F]/g, (c) =>
         ({ '\n': '\\n', '\r': '\\r', '\t': '\\t' }[c] ??
           `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)
-      )
+      ),
     );
-    return JSON.parse(sanitized);
+    try {
+      return JSON.parse(sanitized);
+    } catch (sanitizedError) {
+      throw new Error(formatJsonParseError(sanitizedError, raw), {
+        cause: error,
+      });
+    }
   }
 }
 
@@ -150,7 +168,14 @@ export function triageItem({
       maxAiCredits,
     });
     if (result.status === 0) {
-      return validateTriage(parseJsonResponse(result.stdout));
+      try {
+        return validateTriage(parseJsonResponse(result.stdout));
+      } catch (error) {
+        if (candidateModel === models.at(-1)) {
+          throw error;
+        }
+        continue;
+      }
     }
     const unavailable = /Model .* is not available/i.test(result.stderr);
     if (!unavailable || candidateModel === models.at(-1)) {
