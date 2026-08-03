@@ -89,6 +89,9 @@ writeFileSync(process.env.SCALE_MAINTAINER_RESULT_PATH, JSON.stringify({
   assert.ok(invocations[0].includes('gpt-5.6-terra'));
   assert.ok(invocations[1].includes('auto'));
   assert.ok(
+    invocations.every((arguments_) => arguments_.includes('--allow-all-tools')),
+  );
+  assert.ok(
     invocations.every((arguments_) => arguments_.includes('--allow-tool=skill')),
   );
   for (const denied of [
