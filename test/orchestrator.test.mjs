@@ -533,7 +533,7 @@ appendFileSync(process.env.OPERATIONS_PATH, 'git:' + arguments_.join(' ') + '\\n
 if (arguments_[0] === 'show-ref') {
   process.exitCode = 1;
 } else if (arguments_[0] === 'worktree' && arguments_[1] === 'add') {
-  mkdirSync(arguments_[4], { recursive: true });
+  mkdirSync(arguments_[4]);
   } else if (arguments_[0] === 'rev-parse') {
     process.stdout.write('initial-head\\n');
 }
@@ -585,6 +585,9 @@ appendFileSync(process.env.OPERATIONS_PATH, 'launch:' + arguments_[arguments_.in
       workerRunnerPath: fakeRunnerPath,
     }),
   );
+  const staleWorktree = join(worktreeRoot, 'issue-104');
+  mkdirSync(staleWorktree, { recursive: true });
+  writeFileSync(join(staleWorktree, 'stale.txt'), 'stale');
 
   const result = runOrchestrator(
     [
@@ -611,6 +614,7 @@ appendFileSync(process.env.OPERATIONS_PATH, 'launch:' + arguments_[arguments_.in
   assert.match(operations.at(-2), /^claim:item-104$/);
   assert.match(operations.at(-1), /^launch:/);
   assert.ok(operations.some((operation) => operation.startsWith('git:worktree remove --force')));
+  assert.ok(operations.some((operation) => operation === 'git:worktree prune'));
   assert.ok(operations.some((operation) => operation.startsWith('git:show-ref --verify --quiet refs/heads/copilot/issue-104-fix-button-focus')));
   assert.ok(operations.some((operation) => operation.startsWith('git:worktree add -b copilot/issue-104-fix-button-focus')));
   assert.match(manifest.prompt, /scale-maintainer/);

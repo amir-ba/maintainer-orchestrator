@@ -18,6 +18,7 @@ import {
   readdirSync,
   readFileSync,
   renameSync,
+  rmSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
@@ -209,6 +210,10 @@ function prepareWorktree(config, git, item) {
   } catch {
     // The worktree may not exist yet.
   }
+  rmSync(worktree, { recursive: true, force: true });
+  runClient(git, ['worktree', 'prune'], {
+    cwd: config.repositoryPath,
+  });
 
   let branchExists = true;
   try {
