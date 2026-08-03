@@ -1,0 +1,15 @@
+{
+  "name": "scale-maintainer-orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check orchestrator.mjs && node --check triage-runner.mjs && node --check worker-runner.mjs",
+    "test": "node --test test/*.test.mjs",
+    "scheduler:whatif": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./install-scheduler.ps1 -WhatIf -PassThru",
+    "scheduler:install": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./install-scheduler.ps1 -PassThru"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
